@@ -2,13 +2,15 @@ import asyncio
 import os
 import sys
 from collections.abc import Coroutine
-from pathlib import Path
 
 import click
 from loguru import logger
 
 try:
-    LOG_DIR = Path.home() / '.mcp_jenkins'
+    from mcp_jenkins.xdg import get_data_dir
+
+    LOG_DIR = get_data_dir()
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     logger.add(LOG_DIR / 'log.log', rotation='10 MB')
 except Exception as e:  # noqa: BLE001
     logger.error(f'Failed to set up logger directory: {e}')
@@ -44,8 +46,8 @@ except Exception as e:  # noqa: BLE001
 @click.option(
     '--config-file',
     type=click.Path(exists=False),
-    default=None,
-    help='Path to multi-instance YAML config file (e.g. ~/.mcp_jenkins/instances.yaml)',
+    default='~/.config/mcp-jenkins/instances.yaml',
+    help='Path to multi-instance YAML config file (e.g. ~/.config/mcp-jenkins/instances.yaml)',
 )
 @click.option(
     '--transport',

@@ -29,10 +29,10 @@ uv sync
 uv run mcp-jenkins --jenkins-url https://jenkins.example.com --jenkins-username alice --jenkins-password <api-token>
 
 # Multi-instance (streamable-http)
-uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --transport streamable-http
+uv run mcp-jenkins --config-file ~/.config/mcp-jenkins/instances.yaml --transport streamable-http
 
 # Read-only mode
-uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --read-only --transport streamable-http
+uv run mcp-jenkins --config-file ~/.config/mcp-jenkins/instances.yaml --read-only --transport streamable-http
 ```
 
 ## CLI Arguments
@@ -68,7 +68,7 @@ uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --read-only --tra
       "args": [
         "--directory", "/path/to/mcp-jenkins-multi-instance",
         "run", "mcp-jenkins",
-        "--config-file", "/path/to/instances.yaml"
+        "--config-file", "/path/to/config/mcp-jenkins/instances.yaml"
       ]
     }
   }
@@ -90,7 +90,7 @@ Add to `.vscode/mcp.json` in your workspace (or `settings.json`):
             "args": [
                 "--directory", "/path/to/mcp-jenkins-multi-instance",
                 "run", "mcp-jenkins",
-                "--config-file", "/path/to/instances.yaml"
+                "--config-file", "/path/to/config/mcp-jenkins/instances.yaml"
             ]
         }
     }
@@ -113,7 +113,7 @@ uv run mcp-jenkins \
 
 # Multi-instance
 uv run mcp-jenkins \
-  --config-file ~/.mcp_jenkins/instances.yaml \
+  --config-file ~/.config/mcp-jenkins/instances.yaml \
   --transport streamable-http
 ```
 
@@ -149,7 +149,7 @@ You can connect to multiple Jenkins instances simultaneously using a YAML config
 ### Config file format
 
 ```yaml
-# ~/.mcp_jenkins/instances.yaml
+# ~/.config/mcp-jenkins/instances.yaml
 default: discover
 
 instances:
@@ -169,7 +169,7 @@ instances:
 ### Starting in multi-instance mode
 
 ```shell
-uvx mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --transport streamable-http
+uvx mcp-jenkins --config-file ~/.config/mcp-jenkins/instances.yaml --transport streamable-http
 ```
 
 All existing single-instance CLI flags (`--jenkins-url`, etc.) continue to work without a config file.
@@ -189,7 +189,7 @@ get_build(fullname="my-job", instance="discover")
 
 For HTTP transports, the instance can also be selected via the `x-jenkins-instance` request header.
 
-> **Security note:** Store your config file with restricted permissions (`chmod 600 ~/.mcp_jenkins/instances.yaml`) since it contains credentials.
+> **Security note:** Store your config file with restricted permissions (`chmod 600 ~/.config/mcp-jenkins/instances.yaml`) since it contains credentials.
 
 ## Available Tools
 | Tool                       | Description                                         |
