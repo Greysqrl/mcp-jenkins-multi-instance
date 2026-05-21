@@ -76,47 +76,70 @@ uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --read-only --tra
 ```
 
 ### VSCode Copilot Chat
-1. Create `.vscode` folder with `mcp.json` file in you workspace for local setup or edit `settings.json` trough settings menu.
-2. Insert the following configuration:
-- SSE mode
+
+#### stdio (recommended for single-user local use)
+
+Add to `.vscode/mcp.json` in your workspace (or `settings.json`):
+
 ```json
 {
     "servers": {
-        "jenkins": {
-            "url": "http://localhost:9887/sse",
-            "type": "sse"
-        }
-    }
-}
-```
-- Streamable-Http mode
-```json
-{
-    "servers": {
-        "mcp-jenkins-mcp": {
-            "autoApprove": [],
-            "disabled": false,
-            "timeout": 60,
-            "type": "streamableHttp",
-            "url": "http://localhost:9887/mcp"
+        "mcp-jenkins": {
+            "type": "stdio",
+            "command": "uv",
+            "args": [
+                "--directory", "/path/to/mcp-jenkins-multi-instance",
+                "run", "mcp-jenkins",
+                "--config-file", "/path/to/instances.yaml"
+            ]
         }
     }
 }
 ```
 
-Run the Jenkins MCP server with the following command:
+For single-instance use, replace `--config-file` with `--jenkins-url`, `--jenkins-username`, and `--jenkins-password` args.
+
+#### SSE / Streamable-HTTP (shared server)
+
+First, start the server:
+
 ```shell
 # Single instance
 uv run mcp-jenkins \
   --jenkins-url xxx \
   --jenkins-username xxx \
   --jenkins-password xxx \
-  --transport sse
+  --transport streamable-http
 
 # Multi-instance
 uv run mcp-jenkins \
   --config-file ~/.mcp_jenkins/instances.yaml \
-  --transport sse
+  --transport streamable-http
+```
+
+Then configure the client in `.vscode/mcp.json`:
+
+- SSE mode
+```json
+{
+    "servers": {
+        "mcp-jenkins": {
+            "url": "http://localhost:9887/sse",
+            "type": "sse"
+        }
+    }
+}
+```
+- Streamable-HTTP mode
+```json
+{
+    "servers": {
+        "mcp-jenkins": {
+            "type": "streamableHttp",
+            "url": "http://localhost:9887/mcp"
+        }
+    }
+}
 ```
 
 ## Multi-Instance Support
