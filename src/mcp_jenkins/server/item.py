@@ -7,7 +7,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_all_items(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all items from Jenkins
 
@@ -17,10 +17,13 @@ async def get_all_items(ctx: Context, instance: str | None = None) -> list[dict]
     Returns:
         A list of items
     """
-    return [item.model_dump(exclude_none=True) for item in jenkins(ctx, instance=instance).get_items()]
+    return [
+        item.model_dump(exclude_none=True)
+        for item in jenkins(ctx, instance=instance).get_items()
+    ]
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_item(ctx: Context, fullname: str, instance: str | None = None) -> dict:
     """Get specific item from Jenkins
 
@@ -31,11 +34,17 @@ async def get_item(ctx: Context, fullname: str, instance: str | None = None) -> 
     Returns:
         The item
     """
-    return jenkins(ctx, instance=instance).get_item(fullname=fullname).model_dump(exclude_none=True)
+    return (
+        jenkins(ctx, instance=instance)
+        .get_item(fullname=fullname)
+        .model_dump(exclude_none=True)
+    )
 
 
-@mcp.tool(tags=['read'])
-async def get_item_config(ctx: Context, fullname: str, instance: str | None = None) -> str:
+@mcp.tool(tags=["read"])
+async def get_item_config(
+    ctx: Context, fullname: str, instance: str | None = None
+) -> str:
     """Get specific item config from Jenkins
 
     Args:
@@ -48,8 +57,10 @@ async def get_item_config(ctx: Context, fullname: str, instance: str | None = No
     return jenkins(ctx, instance=instance).get_item_config(fullname=fullname)
 
 
-@mcp.tool(tags=['write'])
-async def set_item_config(ctx: Context, fullname: str, config_xml: str, instance: str | None = None) -> None:
+@mcp.tool(tags=["write"])
+async def set_item_config(
+    ctx: Context, fullname: str, config_xml: str, instance: str | None = None
+) -> None:
     """Set specific item config in Jenkins
 
     Args:
@@ -57,10 +68,12 @@ async def set_item_config(ctx: Context, fullname: str, config_xml: str, instance
         config_xml: The config XML of the item
         instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
     """
-    jenkins(ctx, instance=instance).set_item_config(fullname=fullname, config_xml=config_xml)
+    jenkins(ctx, instance=instance).set_item_config(
+        fullname=fullname, config_xml=config_xml
+    )
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def query_items(
     ctx: Context,
     class_pattern: str = None,
@@ -92,11 +105,11 @@ async def query_items(
     ]
 
 
-@mcp.tool(tags=['write'])
+@mcp.tool(tags=["write"])
 async def build_item(
     ctx: Context,
     fullname: str,
-    build_type: Literal['build', 'buildWithParameters'],
+    build_type: Literal["build", "buildWithParameters"],
     data: dict | None = None,
     instance: str | None = None,
 ) -> int:
@@ -111,11 +124,15 @@ async def build_item(
     Returns:
         The queue item number of the item.
     """
-    return jenkins(ctx, instance=instance).build_item(fullname=fullname, build_type=build_type, data=data)
+    return jenkins(ctx, instance=instance).build_item(
+        fullname=fullname, build_type=build_type, data=data
+    )
 
 
-@mcp.tool(tags=['read'])
-async def get_item_parameters(ctx: Context, fullname: str, instance: str | None = None) -> list[dict]:
+@mcp.tool(tags=["read"])
+async def get_item_parameters(
+    ctx: Context, fullname: str, instance: str | None = None
+) -> list[dict]:
     """Get the parameter definitions of a Jenkins job
 
     Args:
@@ -129,13 +146,13 @@ async def get_item_parameters(ctx: Context, fullname: str, instance: str | None 
     root = ET.fromstring(config_xml)
 
     params = []
-    for param in root.iter('parameterDefinitions'):
+    for param in root.iter("parameterDefinitions"):
         for definition in param:
             entry = {
-                'name': definition.findtext('name', ''),
-                'type': definition.tag,
-                'defaultValue': definition.findtext('defaultValue', ''),
-                'description': definition.findtext('description', ''),
+                "name": definition.findtext("name", ""),
+                "type": definition.tag,
+                "defaultValue": definition.findtext("defaultValue", ""),
+                "description": definition.findtext("description", ""),
             }
             params.append(entry)
 

@@ -1,68 +1,68 @@
 import asyncio
 import os
 import sys
-from pathlib import Path
+from collections.abc import Coroutine
 
 import click
 from loguru import logger
 
 try:
-    LOG_DIR = Path.home() / '.mcp_jenkins'
-    logger.add(LOG_DIR / 'log.log', rotation='10 MB')
-except Exception as e:  # noqa: BLE001
-    logger.error(f'Failed to set up logger directory: {e}')
+    from mcp_jenkins.xdg import get_data_dir
 
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    LOG_DIR = get_data_dir()
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    logger.add(LOG_DIR / "log.log", rotation="10 MB")
+except Exception as e:  # noqa: BLE001
+    logger.error(f"Failed to set up logger directory: {e}")
 
 
 @click.command()
-@click.option('--jenkins-url', required=False)
-@click.option('--jenkins-username', required=False)
-@click.option('--jenkins-password', required=False)
-@click.option('--jenkins-timeout', default=5)
+@click.option("--jenkins-url", required=False)
+@click.option("--jenkins-username", required=False)
+@click.option("--jenkins-password", required=False)
+@click.option("--jenkins-timeout", default=5)
 @click.option(
-    '--jenkins-verify-ssl/--no-jenkins-verify-ssl',
+    "--jenkins-verify-ssl/--no-jenkins-verify-ssl",
     default=True,
-    help='Whether to verify SSL certificates, default is True',
+    help="Whether to verify SSL certificates, default is True",
 )
 @click.option(
-    '--read-only',
+    "--read-only",
     default=False,
     is_flag=True,
-    help='Whether to run in read-only mode, default is False',
+    help="Whether to run in read-only mode, default is False",
 )
 @click.option(
-    '--tool-regex',
-    default='',
-    help='(Deprecated) Regex pattern to enable specific tools',
+    "--tool-regex",
+    default="",
+    help="(Deprecated) Regex pattern to enable specific tools",
 )
 @click.option(
-    '--jenkins-session-singleton/--no-jenkins-session-singleton',
+    "--jenkins-session-singleton/--no-jenkins-session-singleton",
     default=True,
-    help='In the same session, does it share the Jenkins request instance, '
-    'significantly reducing the number of instantiations and crumb requests',
+    help="In the same session, does it share the Jenkins request instance, "
+    "significantly reducing the number of instantiations and crumb requests",
 )
 @click.option(
-    '--config-file',
+    "--config-file",
     type=click.Path(exists=False),
-    default=None,
-    help='Path to multi-instance YAML config file (e.g. ~/.mcp_jenkins/instances.yaml)',
+    default="~/.config/mcp-jenkins/instances.yaml",
+    help="Path to multi-instance YAML config file (e.g. ~/.config/mcp-jenkins/instances.yaml)",
 )
 @click.option(
-    '--transport',
-    type=click.Choice(['stdio', 'sse', 'streamable-http']),
-    default='stdio',
+    "--transport",
+    type=click.Choice(["stdio", "sse", "streamable-http"]),
+    default="stdio",
 )
 @click.option(
-    '--host',
-    default='0.0.0.0',
-    help='Host to bind to for SSE or Streamable HTTP transport',
+    "--host",
+    default="0.0.0.0",
+    help="Host to bind to for SSE or Streamable HTTP transport",
 )  # noqa: S104
 @click.option(
-    '--port',
+    "--port",
     default=9887,
-    help='Port to listen on for SSE or Streamable HTTP transport',
+    help="Port to listen on for SSE or Streamable HTTP transport",
 )
 def main(
     jenkins_url: str,
@@ -79,31 +79,40 @@ def main(
     port: int,
 ) -> None:
     if config_file:
-        os.environ['MCP_JENKINS_CONFIG'] = str(config_file)
+        os.environ["MCP_JENKINS_CONFIG"] = str(config_file)
     if jenkins_url:
-        os.environ['jenkins_url'] = jenkins_url
+        os.environ["jenkins_url"] = jenkins_url
     if jenkins_username:
-        os.environ['jenkins_username'] = jenkins_username
+        os.environ["jenkins_username"] = jenkins_username
     if jenkins_password:
-        os.environ['jenkins_password'] = jenkins_password
+        os.environ["jenkins_password"] = jenkins_password
 
-    os.environ['jenkins_timeout'] = str(jenkins_timeout)
-    os.environ['jenkins_verify_ssl'] = str(jenkins_verify_ssl).lower()
-    os.environ['jenkins_session_singleton'] = str(jenkins_session_singleton).lower()
+    os.environ["jenkins_timeout"] = str(jenkins_timeout)
+    os.environ["jenkins_verify_ssl"] = str(jenkins_verify_ssl).lower()
+    os.environ["jenkins_session_singleton"] = str(jenkins_session_singleton).lower()
 
     from mcp_jenkins.server import mcp
 
     if read_only:
-        mcp.enable(tags={'read'}, only=True)
+        mcp.enable(tags={"read"}, only=True)
 
     if tool_regex:
-        logger.warning('The [--tool-regex] option is deprecated and will be removed in future versions.')
+        logger.warning(
+            "The [--tool-regex] option is deprecated and will be removed in future versions."
+        )
 
-    if transport == 'stdio':
-        asyncio.run(mcp.run_async(transport=transport))
-    elif transport in ('sse', 'streamable-http'):
-        asyncio.run(mcp.run_async(transport=transport, host=host, port=port))
+    def _run_with_loop_factory(coro: Coroutine) -> None:
+        if sys.platform == "win32":
+            with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop) as runner:
+                return runner.run(coro)
+        else:
+            return asyncio.run(coro)
+
+    if transport == "stdio":
+        _run_with_loop_factory(mcp.run_async(transport=transport))
+    elif transport in ("sse", "streamable-http"):
+        _run_with_loop_factory(mcp.run_async(transport=transport, host=host, port=port))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

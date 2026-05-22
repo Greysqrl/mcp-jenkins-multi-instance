@@ -16,8 +16,8 @@ class MultiInstanceConfig(BaseModel):
     default: str
     instances: dict[str, JenkinsInstanceConfig]
 
-    @model_validator(mode='after')
-    def validate_default_exists(self) -> 'MultiInstanceConfig':
+    @model_validator(mode="after")
+    def validate_default_exists(self) -> "MultiInstanceConfig":
         if self.default not in self.instances:
             msg = f"Default instance '{self.default}' not found in configured instances: {list(self.instances.keys())}"
             raise ValueError(msg)
@@ -38,14 +38,14 @@ def load_instances_config(path: Path) -> MultiInstanceConfig:
         ValueError: If the YAML is invalid or fails validation.
     """
     if not path.exists():
-        msg = f'Configuration file not found: {path}'
+        msg = f"Configuration file not found: {path}"
         raise FileNotFoundError(msg)
 
     with open(path) as f:
         data = yaml.safe_load(f)
 
     if not isinstance(data, dict):
-        msg = f'Configuration file must contain a YAML mapping, got: {type(data).__name__}'
+        msg = f"Configuration file must contain a YAML mapping, got: {type(data).__name__}"
         raise ValueError(msg)
 
     return MultiInstanceConfig(**data)

@@ -4,7 +4,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_all_views(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all top-level views from Jenkins.
 
@@ -17,8 +17,10 @@ async def get_all_views(ctx: Context, instance: str | None = None) -> list[dict]
     return jenkins(ctx, instance=instance).get_views()
 
 
-@mcp.tool(tags=['read'])
-async def get_view(ctx: Context, view_path: str, depth: int = 0, instance: str | None = None) -> dict:
+@mcp.tool(tags=["read"])
+async def get_view(
+    ctx: Context, view_path: str, depth: int = 0, instance: str | None = None
+) -> dict:
     """Get a Jenkins view by path, returning its jobs and/or nested sub-views.
 
     Views can be nested up to multiple levels deep. Use "/" to separate levels

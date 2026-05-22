@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class Queue(BaseModel):
     discoverableItems: list
-    items: list['QueueItem']
+    items: list["QueueItem"]
 
 
 class QueueItem(BaseModel):
@@ -12,7 +12,7 @@ class QueueItem(BaseModel):
     url: str
     why: str | None
 
-    task: 'QueueItemTask'
+    task: "QueueItemTask"
 
 
 class QueueItemTask(BaseModel):

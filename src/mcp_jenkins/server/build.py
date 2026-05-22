@@ -6,7 +6,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_running_builds(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all running builds from Jenkins
 
@@ -17,13 +17,15 @@ async def get_running_builds(ctx: Context, instance: str | None = None) -> list[
         A list of all running builds
     """
     return [
-        item.model_dump(include={'number', 'url', 'building', 'timestamp'})
+        item.model_dump(include={"number", "url", "building", "timestamp"})
         for item in jenkins(ctx, instance=instance).get_running_builds()
     ]
 
 
-@mcp.tool(tags=['read'])
-async def get_build(ctx: Context, fullname: str, number: int | None = None, instance: str | None = None) -> dict:
+@mcp.tool(tags=["read"])
+async def get_build(
+    ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
+) -> dict:
     """Get specific build info from Jenkins
 
     Args:
@@ -35,12 +37,20 @@ async def get_build(ctx: Context, fullname: str, number: int | None = None, inst
         The build info
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
-    return jenkins(ctx, instance=instance).get_build(fullname=fullname, number=number).model_dump(exclude_none=True)
+    return (
+        jenkins(ctx, instance=instance)
+        .get_build(fullname=fullname, number=number)
+        .model_dump(exclude_none=True)
+    )
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_scripts(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
 ) -> list[str]:
@@ -55,12 +65,20 @@ async def get_build_scripts(
         A list of scripts used in the build
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
-    return jenkins(ctx, instance=instance).get_build_replay(fullname=fullname, number=number).scripts
+    return (
+        jenkins(ctx, instance=instance)
+        .get_build_replay(fullname=fullname, number=number)
+        .scripts
+    )
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_console_output(
     ctx: Context,
     fullname: str,
@@ -84,16 +102,20 @@ async def get_build_console_output(
         The console output of the build
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
     if number is None:
-        raise ValueError(f'No build found for job: {fullname}')
+        raise ValueError(f"No build found for job: {fullname}")
 
     return jenkins(ctx, instance=instance).get_build_console_output(
         fullname=fullname, number=number, pattern=pattern, offset=offset, limit=limit
     )
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_test_report(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
 ) -> dict:
@@ -108,12 +130,18 @@ async def get_build_test_report(
         The test report of the build
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
-    return jenkins(ctx, instance=instance).get_build_test_report(fullname=fullname, number=number)
+    return jenkins(ctx, instance=instance).get_build_test_report(
+        fullname=fullname, number=number
+    )
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_parameters(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
 ) -> dict:
@@ -128,13 +156,21 @@ async def get_build_parameters(
         A dictionary of build parameter names and their values
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
-    return jenkins(ctx, instance=instance).get_build_parameters(fullname=fullname, number=number)
+    return jenkins(ctx, instance=instance).get_build_parameters(
+        fullname=fullname, number=number
+    )
 
 
-@mcp.tool(tags=['write'])
-async def stop_build(ctx: Context, fullname: str, number: int, instance: str | None = None) -> None:
+@mcp.tool(tags=["write"])
+async def stop_build(
+    ctx: Context, fullname: str, number: int, instance: str | None = None
+) -> None:
     """Stop a specific build in Jenkins
 
     Args:
@@ -145,7 +181,7 @@ async def stop_build(ctx: Context, fullname: str, number: int, instance: str | N
     return jenkins(ctx, instance=instance).stop_build(fullname=fullname, number=number)
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_all_build_artifacts(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
 ) -> list[dict]:
@@ -160,17 +196,27 @@ async def get_all_build_artifacts(
         A list of artifact metadata dicts with fileName, relativePath, and displayPath
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
     return [
         artifact.model_dump(exclude_none=True)
-        for artifact in jenkins(ctx, instance=instance).get_build_artifacts(fullname=fullname, number=number)
+        for artifact in jenkins(ctx, instance=instance).get_build_artifacts(
+            fullname=fullname, number=number
+        )
     ]
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_artifact(
-    ctx: Context, fullname: str, relative_path: str, number: int | None = None, instance: str | None = None
+    ctx: Context,
+    fullname: str,
+    relative_path: str,
+    number: int | None = None,
+    instance: str | None = None,
 ) -> dict:
     """Download an artifact from a specific build in Jenkins
 
@@ -186,21 +232,32 @@ async def get_build_artifact(
         A dict with 'content' (str) and 'encoding' ('utf-8' or 'base64')
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
     content = jenkins(ctx, instance=instance).get_build_artifact(
         fullname=fullname, number=number, relative_path=relative_path
     )
 
     try:
-        return {'content': content.decode('utf-8'), 'encoding': 'utf-8'}
+        return {"content": content.decode("utf-8"), "encoding": "utf-8"}
     except UnicodeDecodeError:
-        return {'content': base64.b64encode(content).decode('ascii'), 'encoding': 'base64'}
+        return {
+            "content": base64.b64encode(content).decode("ascii"),
+            "encoding": "base64",
+        }
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def get_build_artifact_url(
-    ctx: Context, fullname: str, relative_path: str, number: int | None = None, instance: str | None = None
+    ctx: Context,
+    fullname: str,
+    relative_path: str,
+    number: int | None = None,
+    instance: str | None = None,
 ) -> str:
     """Get the direct URL of an artifact from a specific build in Jenkins
 
@@ -214,7 +271,11 @@ async def get_build_artifact_url(
         The direct Jenkins URL of the artifact
     """
     if number is None:
-        number = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1).lastBuild.number
+        number = (
+            jenkins(ctx, instance=instance)
+            .get_item(fullname=fullname, depth=1)
+            .lastBuild.number
+        )
 
     return jenkins(ctx, instance=instance).get_build_artifact_url(
         fullname=fullname, number=number, relative_path=relative_path

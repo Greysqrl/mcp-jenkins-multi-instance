@@ -27,20 +27,24 @@ class LifespanContext(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastMCP[LifespanContext]) -> AsyncIterator['LifespanContext']:
-    jenkins_url = os.getenv('jenkins_url')
-    jenkins_username = os.getenv('jenkins_username')
-    jenkins_password = os.getenv('jenkins_password')
+async def lifespan(app: FastMCP[LifespanContext]) -> AsyncIterator["LifespanContext"]:
+    jenkins_url = os.getenv("jenkins_url")
+    jenkins_username = os.getenv("jenkins_username")
+    jenkins_password = os.getenv("jenkins_password")
 
-    jenkins_timeout = int(os.getenv('jenkins_timeout', '5'))
-    jenkins_verify_ssl = os.getenv('jenkins_verify_ssl', 'true').lower() == 'true'
-    jenkins_session_singleton = os.getenv('jenkins_session_singleton', 'true').lower() == 'true'
+    jenkins_timeout = int(os.getenv("jenkins_timeout", "5"))
+    jenkins_verify_ssl = os.getenv("jenkins_verify_ssl", "true").lower() == "true"
+    jenkins_session_singleton = (
+        os.getenv("jenkins_session_singleton", "true").lower() == "true"
+    )
 
     instances = None
-    config_path = os.getenv('MCP_JENKINS_CONFIG')
+    config_path = os.getenv("MCP_JENKINS_CONFIG")
     if config_path:
         instances = load_instances_config(Path(config_path))
-        logger.info(f'Loaded multi-instance config with instances: {list(instances.instances.keys())}')
+        logger.info(
+            f"Loaded multi-instance config with instances: {list(instances.instances.keys())}"
+        )
 
     yield LifespanContext(
         jenkins_url=jenkins_url,
@@ -63,7 +67,7 @@ def jenkins(ctx: Context, instance: str | None = None) -> Jenkins:
         if not instance_name:
             try:
                 requests = get_http_request()
-                instance_name = getattr(requests.state, 'jenkins_instance', None)
+                instance_name = getattr(requests.state, "jenkins_instance", None)
             except (RuntimeError, Exception):  # noqa: BLE001, S110
                 pass
         if not instance_name:
@@ -75,14 +79,14 @@ def jenkins(ctx: Context, instance: str | None = None) -> Jenkins:
 
         # Session cache per instance
         if lifespan_ctx.jenkins_session_singleton:
-            clients = getattr(ctx.session, 'jenkins_clients', None)  # type: ignore[attr-defined]
+            clients = getattr(ctx.session, "jenkins_clients", None)  # type: ignore[attr-defined]
             if clients and instance_name in clients:
                 return clients[instance_name]
 
         config = instances.instances[instance_name]
         logger.info(
             f'Creating Jenkins client for instance "{instance_name}" with url: '
-            f'{config.url}, username: {config.username}, timeout: {config.timeout}, verify_ssl: {config.verify_ssl}'
+            f"{config.url}, username: {config.username}, timeout: {config.timeout}, verify_ssl: {config.verify_ssl}"
         )
 
         client = Jenkins(
@@ -94,14 +98,14 @@ def jenkins(ctx: Context, instance: str | None = None) -> Jenkins:
         )
 
         if lifespan_ctx.jenkins_session_singleton:
-            if not getattr(ctx.session, 'jenkins_clients', None):  # type: ignore[attr-defined]
+            if not getattr(ctx.session, "jenkins_clients", None):  # type: ignore[attr-defined]
                 ctx.session.jenkins_clients = {}  # type: ignore[attr-defined]
             ctx.session.jenkins_clients[instance_name] = client  # type: ignore[attr-defined]
 
         return client
 
     # Legacy single-instance mode
-    if lifespan_ctx.jenkins_session_singleton and getattr(ctx.session, 'jenkins', None):  # type: ignore[attr-defined]
+    if lifespan_ctx.jenkins_session_singleton and getattr(ctx.session, "jenkins", None):  # type: ignore[attr-defined]
         return ctx.session.jenkins  # type: ignore[attr-defined]
 
     jenkins_url = lifespan_ctx.jenkins_url
@@ -114,29 +118,37 @@ def jenkins(ctx: Context, instance: str | None = None) -> Jenkins:
     try:
         requests = get_http_request()
 
-        jenkins_url = getattr(requests.state, 'jenkins_url', None) or jenkins_url
-        jenkins_username = getattr(requests.state, 'jenkins_username', None) or jenkins_username
-        jenkins_password = getattr(requests.state, 'jenkins_password', None) or jenkins_password
+        jenkins_url = getattr(requests.state, "jenkins_url", None) or jenkins_url
+        jenkins_username = (
+            getattr(requests.state, "jenkins_username", None) or jenkins_username
+        )
+        jenkins_password = (
+            getattr(requests.state, "jenkins_password", None) or jenkins_password
+        )
 
-        logger.debug(f'Retrieved Jenkins auth from request state - url: {jenkins_url}, username: {jenkins_username}')
+        logger.debug(
+            f"Retrieved Jenkins auth from request state - url: {jenkins_url}, username: {jenkins_username}"
+        )
     except RuntimeError as e:
-        logger.debug(f'No HTTP request context available, falling back to environment variables: {e}')
+        logger.debug(
+            f"No HTTP request context available, falling back to environment variables: {e}"
+        )
     except Exception as e:  # noqa: BLE001
         logger.error(
-            f'Unexpected error retrieving Jenkins auth from request, falling back to environment variables: {e}'
+            f"Unexpected error retrieving Jenkins auth from request, falling back to environment variables: {e}"
         )
 
     if not all((jenkins_url, jenkins_username, jenkins_password)):
         msg = (
-            'Jenkins authentication details are missing. '
-            'Please provide them via x-jenkins-* headers '
-            'or CLI arguments (--jenkins-url, --jenkins-username, --jenkins-password).'
+            "Jenkins authentication details are missing. "
+            "Please provide them via x-jenkins-* headers "
+            "or CLI arguments (--jenkins-url, --jenkins-username, --jenkins-password)."
         )
         raise ValueError(msg)
 
     logger.info(
-        f'Creating Jenkins client with url: '
-        f'{jenkins_url}, username: {jenkins_username}, timeout: {jenkins_timeout}, verify_ssl: {jenkins_verify_ssl}'
+        f"Creating Jenkins client with url: "
+        f"{jenkins_url}, username: {jenkins_username}, timeout: {jenkins_timeout}, verify_ssl: {jenkins_verify_ssl}"
     )
 
     ctx.session.jenkins = Jenkins(  # type: ignore[attr-defined]

@@ -9,37 +9,43 @@ class RestEndpoint(str):
 
     def __call__(self, **kwargs: str | int) -> str:
         if missing := self._fields.difference(kwargs):
-            raise KeyError(f'Missing: {missing}')
+            raise KeyError(f"Missing: {missing}")
 
         return self.format(**kwargs)
 
 
-CRUMB = RestEndpoint('crumbIssuer/api/json')
+CRUMB = RestEndpoint("crumbIssuer/api/json")
 
-ITEM = RestEndpoint('{folder}job/{name}/api/json?depth={depth}')
-ITEMS = RestEndpoint('{folder}/api/json?tree={query}')
-ITEM_CONFIG = RestEndpoint('{folder}job/{name}/config.xml')
-ITEM_BUILD = RestEndpoint('{folder}job/{name}/{build_type}')
+ITEM = RestEndpoint("{folder}job/{name}/api/json?depth={depth}")
+ITEMS = RestEndpoint("{folder}/api/json?tree={query}")
+ITEM_CONFIG = RestEndpoint("{folder}job/{name}/config.xml")
+ITEM_BUILD = RestEndpoint("{folder}job/{name}/{build_type}")
 
-QUEUE = RestEndpoint('queue/api/json?depth={depth}')
-QUEUE_ITEM = RestEndpoint('queue/item/{id}/api/json?depth={depth}')
-QUEUE_CANCEL_ITEM = RestEndpoint('queue/cancelItem?id={id}')
+QUEUE = RestEndpoint("queue/api/json?depth={depth}")
+QUEUE_ITEM = RestEndpoint("queue/item/{id}/api/json?depth={depth}")
+QUEUE_CANCEL_ITEM = RestEndpoint("queue/cancelItem?id={id}")
 
-NODE = RestEndpoint('computer/{name}/api/json?depth={depth}')
-NODES = RestEndpoint('computer/api/json?depth={depth}')
-NODE_CONFIG = RestEndpoint('computer/{name}/config.xml')
+NODE = RestEndpoint("computer/{name}/api/json?depth={depth}")
+NODES = RestEndpoint("computer/api/json?depth={depth}")
+NODE_CONFIG = RestEndpoint("computer/{name}/config.xml")
 
-VIEW = RestEndpoint('{view_path}/api/json?depth={depth}')
-VIEWS = RestEndpoint('api/json?tree=views[name,url]')
+VIEW = RestEndpoint("{view_path}/api/json?depth={depth}")
+VIEWS = RestEndpoint("api/json?tree=views[name,url]")
 
-BUILD = RestEndpoint('{folder}job/{name}/{number}/api/json?depth={depth}')
-BUILD_CONSOLE_OUTPUT = RestEndpoint('{folder}job/{name}/{number}/consoleText')
-BUILD_STOP = RestEndpoint('{folder}job/{name}/{number}/stop')
-BUILD_REPLAY = RestEndpoint('{folder}job/{name}/{number}/replay')
-BUILD_PARAMETERS = RestEndpoint('{folder}job/{name}/{number}/api/json?tree=actions[parameters[name,value]]')
-BUILD_TEST_REPORT = RestEndpoint('{folder}job/{name}/{number}/testReport/api/json?depth={depth}')
-BUILD_ARTIFACT = RestEndpoint('{folder}job/{name}/{number}/artifact/{relative_path}')
-BUILD_ARTIFACTS = RestEndpoint('{folder}job/{name}/{number}/api/json?tree=artifacts[fileName,relativePath,displayPath]')
+BUILD = RestEndpoint("{folder}job/{name}/{number}/api/json?depth={depth}")
+BUILD_CONSOLE_OUTPUT = RestEndpoint("{folder}job/{name}/{number}/consoleText")
+BUILD_STOP = RestEndpoint("{folder}job/{name}/{number}/stop")
+BUILD_REPLAY = RestEndpoint("{folder}job/{name}/{number}/replay")
+BUILD_PARAMETERS = RestEndpoint(
+    "{folder}job/{name}/{number}/api/json?tree=actions[parameters[name,value]]"
+)
+BUILD_TEST_REPORT = RestEndpoint(
+    "{folder}job/{name}/{number}/testReport/api/json?depth={depth}"
+)
+BUILD_ARTIFACT = RestEndpoint("{folder}job/{name}/{number}/artifact/{relative_path}")
+BUILD_ARTIFACTS = RestEndpoint(
+    "{folder}job/{name}/{number}/api/json?tree=artifacts[fileName,relativePath,displayPath]"
+)
 
-PLUGIN_LIST = RestEndpoint('pluginManager/api/json?depth={depth}')
-PLUGIN_LIST_TREE = RestEndpoint('pluginManager/api/json?tree=plugins[{tree}]')
+PLUGIN_LIST = RestEndpoint("pluginManager/api/json?depth={depth}")
+PLUGIN_LIST_TREE = RestEndpoint("pluginManager/api/json?tree=plugins[{tree}]")

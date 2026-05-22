@@ -14,11 +14,11 @@ class TestAuthMiddleware:
         middleware = AuthMiddleware(mock_app)
 
         scope = {
-            'type': 'http',
-            'headers': [
-                (b'x-jenkins-url', b'https://jenkins.example.com'),
-                (b'x-jenkins-username', b'username'),
-                (b'x-jenkins-password', b'password'),
+            "type": "http",
+            "headers": [
+                (b"x-jenkins-url", b"https://jenkins.example.com"),
+                (b"x-jenkins-username", b"username"),
+                (b"x-jenkins-password", b"password"),
             ],
         }
 
@@ -26,17 +26,17 @@ class TestAuthMiddleware:
 
         mock_app.assert_called_once_with(
             {
-                'type': 'http',
-                'headers': [
-                    (b'x-jenkins-url', b'https://jenkins.example.com'),
-                    (b'x-jenkins-username', b'username'),
-                    (b'x-jenkins-password', b'password'),
+                "type": "http",
+                "headers": [
+                    (b"x-jenkins-url", b"https://jenkins.example.com"),
+                    (b"x-jenkins-username", b"username"),
+                    (b"x-jenkins-password", b"password"),
                 ],
-                'state': {
-                    'jenkins_url': 'https://jenkins.example.com',
-                    'jenkins_username': 'username',
-                    'jenkins_password': 'password',
-                    'jenkins_instance': None,
+                "state": {
+                    "jenkins_url": "https://jenkins.example.com",
+                    "jenkins_username": "username",
+                    "jenkins_password": "password",
+                    "jenkins_instance": None,
                 },
             },
             mock_receive,
@@ -53,19 +53,19 @@ class TestAuthMiddleware:
         middleware = AuthMiddleware(mock_app)
 
         scope = {
-            'type': 'http',
+            "type": "http",
         }
 
         await middleware(scope, mock_receive, mock_send)
 
         mock_app.assert_called_once_with(
             {
-                'type': 'http',
-                'state': {
-                    'jenkins_url': None,
-                    'jenkins_username': None,
-                    'jenkins_password': None,
-                    'jenkins_instance': None,
+                "type": "http",
+                "state": {
+                    "jenkins_url": None,
+                    "jenkins_username": None,
+                    "jenkins_password": None,
+                    "jenkins_instance": None,
                 },
             },
             mock_receive,
@@ -82,7 +82,7 @@ class TestAuthMiddleware:
         middleware = AuthMiddleware(mock_app)
 
         scope = {
-            'type': 'websocket',
+            "type": "websocket",
         }
 
         await middleware(scope, mock_receive, mock_send)

@@ -22,7 +22,7 @@ from mcp_jenkins.jenkins.model.queue import Queue, QueueItem
 
 
 class Jenkins:
-    DEFAULT_HEADERS = {'Content-Type': 'text/xml; charset=utf-8'}
+    DEFAULT_HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
     def __init__(
         self,
@@ -51,11 +51,11 @@ class Jenkins:
         Returns:
             The full URL as a string. (e.g., https://example.com/crumbIssuer/api/json)
         """
-        return '/'.join(str(s).strip('/') for s in [self.url, endpoint])
+        return "/".join(str(s).strip("/") for s in [self.url, endpoint])
 
     def request(
         self,
-        method: Literal['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"],
         endpoint: str,
         *,
         data: dict | str = None,
@@ -85,7 +85,7 @@ class Jenkins:
             headers.update(self.crumb_header)
 
         url = self.endpoint_url(endpoint)
-        logger.debug(f'Sending [{method}] request to {url}')
+        logger.debug(f"Sending [{method}] request to {url}")
 
         response = self._session.request(
             method=method,
@@ -101,7 +101,9 @@ class Jenkins:
         # before giving up — this covers the stale-session case while still
         # surfacing genuine permission errors on the second attempt.
         if crumb and response.status_code == 403 and self._crumb_header:
-            logger.warning('Received 403 with a cached crumb — refreshing crumb and retrying the request')
+            logger.warning(
+                "Received 403 with a cached crumb — refreshing crumb and retrying the request"
+            )
             self._crumb_header = None
             headers.update(self.crumb_header)
             response = self._session.request(
@@ -126,9 +128,9 @@ class Jenkins:
         """
         if self._crumb_header is None:
             try:
-                response = self.request('GET', rest_endpoint.CRUMB, crumb=False)
+                response = self.request("GET", rest_endpoint.CRUMB, crumb=False)
                 crumb = response.json()
-                self._crumb_header = {crumb['crumbRequestField']: crumb['crumb']}
+                self._crumb_header = {crumb["crumbRequestField"]: crumb["crumb"]}
             except HTTPError as e:
                 if e.response.status_code == 404:
                     self._crumb_header = {}
@@ -148,9 +150,9 @@ class Jenkins:
                 - folder: The constructed folder URL (e.g., "job/folder1/job/folder2/").
                 - name: The last component of the path (e.g., "name").
         """
-        parts = fullname.split('/')
+        parts = fullname.split("/")
         name = parts[-1]
-        folder = f'job/{"/job/".join(parts[:-1])}/' if len(parts) > 1 else ''
+        folder = f'job/{"/job/".join(parts[:-1])}/' if len(parts) > 1 else ""
         return folder, name
 
     def _build_view_path(self, view_path: str) -> str:
@@ -164,8 +166,8 @@ class Jenkins:
         """
         from urllib.parse import quote
 
-        parts = [quote(p.strip(), safe='') for p in view_path.split('/') if p.strip()]
-        return '/'.join(f'view/{p}' for p in parts)
+        parts = [quote(p.strip(), safe="") for p in view_path.split("/") if p.strip()]
+        return "/".join(f"view/{p}" for p in parts)
 
     def get_views(self) -> list[dict]:
         """Get all top-level views from Jenkins.
@@ -173,8 +175,8 @@ class Jenkins:
         Returns:
             A list of dictionaries with 'name' and 'url' for each view.
         """
-        response = self.request('GET', rest_endpoint.VIEWS)
-        return response.json().get('views', [])
+        response = self.request("GET", rest_endpoint.VIEWS)
+        return response.json().get("views", [])
 
     def get_view(self, *, view_path: str, depth: int = 0) -> dict:
         """Get a specific view by path.
@@ -190,7 +192,9 @@ class Jenkins:
             A dictionary with the view's name, jobs, and/or nested views.
         """
         url_path = self._build_view_path(view_path)
-        response = self.request('GET', rest_endpoint.VIEW(view_path=url_path, depth=depth))
+        response = self.request(
+            "GET", rest_endpoint.VIEW(view_path=url_path, depth=depth)
+        )
         return response.json()
 
     def get_queue(self, *, depth: int = 1) -> Queue:
@@ -202,10 +206,10 @@ class Jenkins:
         Returns:
             A list of QueueItem objects.
         """
-        response = self.request('GET', rest_endpoint.QUEUE(depth=depth))
+        response = self.request("GET", rest_endpoint.QUEUE(depth=depth))
         return Queue.model_validate(response.json())
 
-    def get_queue_item(self, *, id: int, depth: int = 0) -> 'QueueItem':
+    def get_queue_item(self, *, id: int, depth: int = 0) -> "QueueItem":
         """Get a queue item by its ID.
 
         Args:
@@ -215,7 +219,7 @@ class Jenkins:
         Returns:
             The QueueItem object.
         """
-        response = self.request('GET', rest_endpoint.QUEUE_ITEM(id=id, depth=depth))
+        response = self.request("GET", rest_endpoint.QUEUE_ITEM(id=id, depth=depth))
         return QueueItem.model_validate(response.json())
 
     def cancel_queue_item(self, *, id: int) -> None:
@@ -224,7 +228,7 @@ class Jenkins:
         Args:
             id: The ID of the queue item to cancel.
         """
-        self.request('POST', rest_endpoint.QUEUE_CANCEL_ITEM(id=id))
+        self.request("POST", rest_endpoint.QUEUE_CANCEL_ITEM(id=id))
 
     def get_node(self, *, name: str, depth: int = 0) -> Node:
         """Get a specific node by name.
@@ -236,8 +240,8 @@ class Jenkins:
         Returns:
             The Node object.
         """
-        name = '(master)' if name in ('master', 'Built-In Node') else name
-        response = self.request('GET', rest_endpoint.NODE(name=name, depth=depth))
+        name = "(master)" if name in ("master", "Built-In Node") else name
+        response = self.request("GET", rest_endpoint.NODE(name=name, depth=depth))
         return Node.model_validate(response.json())
 
     def get_nodes(self, *, depth: int = 0) -> list[Node]:
@@ -249,8 +253,8 @@ class Jenkins:
         Returns:
             A list of Node objects.
         """
-        response = self.request('GET', rest_endpoint.NODES(depth=depth))
-        return [Node.model_validate(node) for node in response.json()['computer']]
+        response = self.request("GET", rest_endpoint.NODES(depth=depth))
+        return [Node.model_validate(node) for node in response.json()["computer"]]
 
     def get_node_config(self, *, name: str) -> str:
         """Get the configuration for a node.
@@ -261,7 +265,7 @@ class Jenkins:
         Returns:
             The node configuration as an XML string.
         """
-        response = self.request('GET', rest_endpoint.NODE_CONFIG(name=name))
+        response = self.request("GET", rest_endpoint.NODE_CONFIG(name=name))
         return response.text
 
     def set_node_config(self, *, name: str, config_xml: str) -> None:
@@ -272,7 +276,7 @@ class Jenkins:
             config_xml: The node configuration as an XML string.
         """
         self.request(
-            'POST',
+            "POST",
             rest_endpoint.NODE_CONFIG(name=name),
             headers=self.DEFAULT_HEADERS,
             data=config_xml,
@@ -291,7 +295,7 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'GET',
+            "GET",
             rest_endpoint.BUILD(folder=folder, name=name, number=number, depth=depth),
         )
         return Build.model_validate(response.json())
@@ -321,7 +325,11 @@ class Jenkins:
         compiled = re.compile(pattern) if pattern else None
 
         response = self._session.get(
-            self.endpoint_url(rest_endpoint.BUILD_CONSOLE_OUTPUT(folder=folder, name=name, number=number)),
+            self.endpoint_url(
+                rest_endpoint.BUILD_CONSOLE_OUTPUT(
+                    folder=folder, name=name, number=number
+                )
+            ),
             timeout=self.timeout,
             stream=True,
         )
@@ -341,7 +349,7 @@ class Jenkins:
                 break
 
         response.close()
-        return '\n'.join(matched)
+        return "\n".join(matched)
 
     def stop_build(self, *, fullname: str, number: int) -> None:
         """Stop a running Jenkins build.
@@ -351,7 +359,9 @@ class Jenkins:
             number: The build number.
         """
         folder, name = self._parse_fullname(fullname)
-        self.request('POST', rest_endpoint.BUILD_STOP(folder=folder, name=name, number=number))
+        self.request(
+            "POST", rest_endpoint.BUILD_STOP(folder=folder, name=name, number=number)
+        )
 
     def get_build_replay(self, *, fullname: str, number: int) -> BuildReplay:
         """Get the build replay of a specific build.
@@ -367,11 +377,18 @@ class Jenkins:
         """
 
         folder, name = self._parse_fullname(fullname)
-        response = self.request('GET', rest_endpoint.BUILD_REPLAY(folder=folder, name=name, number=number))
+        response = self.request(
+            "GET", rest_endpoint.BUILD_REPLAY(folder=folder, name=name, number=number)
+        )
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        scripts = [textarea.text for textarea in soup.find_all('textarea', {'name': re.compile(r'_\..*Script.*')})]
+        scripts = [
+            textarea.text
+            for textarea in soup.find_all(
+                "textarea", {"name": re.compile(r"_\..*Script.*")}
+            )
+        ]
         return BuildReplay(scripts=scripts)
 
     def get_build_parameters(self, *, fullname: str, number: int) -> dict:
@@ -386,16 +403,18 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'GET',
+            "GET",
             rest_endpoint.BUILD_PARAMETERS(folder=folder, name=name, number=number),
         )
 
-        for action in response.json().get('actions', []):
-            if 'parameters' in action:
-                return {p['name']: p.get('value') for p in action['parameters']}
+        for action in response.json().get("actions", []):
+            if "parameters" in action:
+                return {p["name"]: p.get("value") for p in action["parameters"]}
         return {}
 
-    def get_build_test_report(self, *, fullname: str, number: int, depth: int = 0) -> dict:
+    def get_build_test_report(
+        self, *, fullname: str, number: int, depth: int = 0
+    ) -> dict:
         """Get the test report of a specific build.
 
         Args:
@@ -408,8 +427,10 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'GET',
-            rest_endpoint.BUILD_TEST_REPORT(folder=folder, name=name, number=number, depth=depth),
+            "GET",
+            rest_endpoint.BUILD_TEST_REPORT(
+                folder=folder, name=name, number=number, depth=depth
+            ),
         )
         return response.json()
 
@@ -425,12 +446,16 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'GET',
+            "GET",
             rest_endpoint.BUILD_ARTIFACTS(folder=folder, name=name, number=number),
         )
-        return [Artifact.model_validate(a) for a in response.json().get('artifacts', [])]
+        return [
+            Artifact.model_validate(a) for a in response.json().get("artifacts", [])
+        ]
 
-    def get_build_artifact(self, *, fullname: str, number: int, relative_path: str) -> bytes:
+    def get_build_artifact(
+        self, *, fullname: str, number: int, relative_path: str
+    ) -> bytes:
         """Download the content of a specific artifact from a build.
 
         Args:
@@ -443,12 +468,16 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'GET',
-            rest_endpoint.BUILD_ARTIFACT(folder=folder, name=name, number=number, relative_path=relative_path),
+            "GET",
+            rest_endpoint.BUILD_ARTIFACT(
+                folder=folder, name=name, number=number, relative_path=relative_path
+            ),
         )
         return response.content
 
-    def get_build_artifact_url(self, *, fullname: str, number: int, relative_path: str) -> str:
+    def get_build_artifact_url(
+        self, *, fullname: str, number: int, relative_path: str
+    ) -> str:
         """Get the direct URL of a specific artifact from a build.
 
         Args:
@@ -461,7 +490,9 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         return self.endpoint_url(
-            rest_endpoint.BUILD_ARTIFACT(folder=folder, name=name, number=number, relative_path=relative_path),
+            rest_endpoint.BUILD_ARTIFACT(
+                folder=folder, name=name, number=number, relative_path=relative_path
+            ),
         )
 
     def get_running_builds(self) -> list[Build]:
@@ -477,11 +508,17 @@ class Jenkins:
         for node in self.get_nodes(depth=2):
             for executor in node.executors:
                 if executor.currentExecutable and executor.currentExecutable.number:
-                    builds.append(Build.model_validate(executor.currentExecutable.model_dump(mode='json')))
+                    builds.append(
+                        Build.model_validate(
+                            executor.currentExecutable.model_dump(mode="json")
+                        )
+                    )
 
         return builds
 
-    def get_items(self, *, folder_depth: int | None = None, folder_depth_per_request: int = 10) -> list[ItemType]:
+    def get_items(
+        self, *, folder_depth: int | None = None, folder_depth_per_request: int = 10
+    ) -> list[ItemType]:
         """Get items in the Jenkins instance up to a specified folder depth.
 
         Args:
@@ -492,25 +529,29 @@ class Jenkins:
             A list of ItemType objects representing the items.
         """
         query = reduce(
-            lambda q, _: f'jobs[url,color,name,{q}]',
+            lambda q, _: f"jobs[url,color,name,{q}]",
             range(folder_depth_per_request),
-            'jobs',
+            "jobs",
         )
-        response = self.request('GET', rest_endpoint.ITEMS(folder='', query=query))
+        response = self.request("GET", rest_endpoint.ITEMS(folder="", query=query))
 
         items = []
 
-        item_stack = [(0, [], response.json()['jobs'])]
+        item_stack = [(0, [], response.json()["jobs"])]
         for level, path, level_items in item_stack:
-            current_items = level_items if isinstance(level_items, list) else [level_items]
+            current_items = (
+                level_items if isinstance(level_items, list) else [level_items]
+            )
 
             for item in current_items:
-                job_path = path + [item['name']]
-                item.setdefault('fullname', '/'.join(job_path))
+                job_path = path + [item["name"]]
+                item.setdefault("fullname", "/".join(job_path))
                 items.append(serialize_item(item))
 
-                children = item.get('jobs')
-                if isinstance(children, list) and (folder_depth is None or level < folder_depth):
+                children = item.get("jobs")
+                if isinstance(children, list) and (
+                    folder_depth is None or level < folder_depth
+                ):
                     item_stack.append((level + 1, job_path, children))
 
         return items
@@ -526,7 +567,9 @@ class Jenkins:
             The ItemType object representing the item.
         """
         folder, name = self._parse_fullname(fullname)
-        response = self.request('GET', rest_endpoint.ITEM(folder=folder, name=name, depth=depth))
+        response = self.request(
+            "GET", rest_endpoint.ITEM(folder=folder, name=name, depth=depth)
+        )
         return serialize_item(response.json())
 
     def get_item_config(self, *, fullname: str) -> str:
@@ -539,7 +582,9 @@ class Jenkins:
             The item configuration as an XML string.
         """
         folder, name = self._parse_fullname(fullname)
-        response = self.request('GET', rest_endpoint.ITEM_CONFIG(folder=folder, name=name))
+        response = self.request(
+            "GET", rest_endpoint.ITEM_CONFIG(folder=folder, name=name)
+        )
         return response.text
 
     def set_item_config(self, *, fullname: str, config_xml: str) -> None:
@@ -551,7 +596,7 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         self.request(
-            'POST',
+            "POST",
             rest_endpoint.ITEM_CONFIG(folder=folder, name=name),
             headers=self.DEFAULT_HEADERS,
             data=config_xml,
@@ -565,7 +610,7 @@ class Jenkins:
         class_pattern: str | None = None,
         fullname_pattern: str | None = None,
         color_pattern: str | None = None,
-    ) -> list['ItemType']:
+    ) -> list["ItemType"]:
         """Query items by specific field patterns.
 
         Args:
@@ -579,10 +624,13 @@ class Jenkins:
             A list of ItemType objects matching the specified patterns.
         """
         class_re, fullname_re, color_re = (
-            re.compile(pattern) if pattern else None for pattern in (class_pattern, fullname_pattern, color_pattern)
+            re.compile(pattern) if pattern else None
+            for pattern in (class_pattern, fullname_pattern, color_pattern)
         )
 
-        items = self.get_items(folder_depth=folder_depth, folder_depth_per_request=folder_depth_per_request)
+        items = self.get_items(
+            folder_depth=folder_depth, folder_depth_per_request=folder_depth_per_request
+        )
 
         result = []
 
@@ -590,11 +638,15 @@ class Jenkins:
             if class_re and not class_re.search(item.class_):
                 continue
             # fullname may be None for some items
-            if item.fullname is None or (fullname_re and not fullname_re.search(item.fullname)):
+            if item.fullname is None or (
+                fullname_re and not fullname_re.search(item.fullname)
+            ):
                 continue
             if color_re:
                 # Only Job has color attribute
-                if not isinstance(item, Job | FreeStyleProject) or not color_re.search(item.color):
+                if not isinstance(item, Job | FreeStyleProject) or not color_re.search(
+                    item.color
+                ):
                     continue
             result.append(item)
 
@@ -604,7 +656,7 @@ class Jenkins:
         self,
         *,
         fullname: str,
-        build_type: Literal['build', 'buildWithParameters'],
+        build_type: Literal["build", "buildWithParameters"],
         data: dict | None = None,
     ) -> int:
         """Trigger a build for a specific item.
@@ -622,12 +674,12 @@ class Jenkins:
         """
         folder, name = self._parse_fullname(fullname)
         response = self.request(
-            'POST',
+            "POST",
             rest_endpoint.ITEM_BUILD(folder=folder, name=name, build_type=build_type),
             data=data,
         )
 
-        return int(response.headers.get('Location', None).strip('/').split('/')[-1])
+        return int(response.headers.get("Location", None).strip("/").split("/")[-1])
 
     def get_plugins(self, *, depth: int = 0) -> list[dict]:
         """Get a list of all installed plugins.
@@ -638,8 +690,8 @@ class Jenkins:
         Returns:
             A list of plugin dictionaries.
         """
-        response = self.request('GET', rest_endpoint.PLUGIN_LIST(depth=depth))
-        return response.json().get('plugins', [])
+        response = self.request("GET", rest_endpoint.PLUGIN_LIST(depth=depth))
+        return response.json().get("plugins", [])
 
     def get_plugin(self, *, short_name: str, depth: int = 2) -> dict | None:
         """Get a specific plugin by short name.
@@ -653,7 +705,7 @@ class Jenkins:
         """
         plugins = self.get_plugins(depth=depth)
         for plugin in plugins:
-            if plugin.get('shortName') == short_name:
+            if plugin.get("shortName") == short_name:
                 return plugin
         return None
 
@@ -669,103 +721,103 @@ class Jenkins:
         jenkins_version = self._get_jenkins_version()
         plugins = self.get_plugins(depth=2)
 
-        installed = {p['shortName']: p for p in plugins}
+        installed = {p["shortName"]: p for p in plugins}
 
         problems = []
         for plugin in plugins:
-            short_name = plugin.get('shortName', '')
-            version = plugin.get('version', '')
-            required_core = plugin.get('requiredCoreVersion', '')
+            short_name = plugin.get("shortName", "")
+            version = plugin.get("version", "")
+            required_core = plugin.get("requiredCoreVersion", "")
 
             if required_core and jenkins_version:
                 if not self._is_core_compatible(jenkins_version, required_core):
                     problems.append(
                         {
-                            'shortName': short_name,
-                            'problem': 'incompatible_core_version',
-                            'pluginVersion': version,
-                            'requiredCoreVersion': required_core,
-                            'jenkinsVersion': jenkins_version,
-                            'severity': 'error',
-                            'message': (
-                                f'Plugin requires Jenkins {required_core}, but current version is {jenkins_version}'
+                            "shortName": short_name,
+                            "problem": "incompatible_core_version",
+                            "pluginVersion": version,
+                            "requiredCoreVersion": required_core,
+                            "jenkinsVersion": jenkins_version,
+                            "severity": "error",
+                            "message": (
+                                f"Plugin requires Jenkins {required_core}, but current version is {jenkins_version}"
                             ),
                         }
                     )
 
-            if not plugin.get('enabled'):
+            if not plugin.get("enabled"):
                 problems.append(
                     {
-                        'shortName': short_name,
-                        'problem': 'plugin_disabled',
-                        'pluginVersion': version,
-                        'severity': 'warning',
-                        'message': 'Plugin is currently disabled',
+                        "shortName": short_name,
+                        "problem": "plugin_disabled",
+                        "pluginVersion": version,
+                        "severity": "warning",
+                        "message": "Plugin is currently disabled",
                     }
                 )
 
-            deps = plugin.get('dependencies', [])
+            deps = plugin.get("dependencies", [])
             for dep in deps:
-                dep_name = dep.get('shortName', '')
-                dep_version = dep.get('version', '')
-                is_optional = dep.get('optional', False)
-                is_bundled = dep.get('bundled', False)
+                dep_name = dep.get("shortName", "")
+                dep_version = dep.get("version", "")
+                is_optional = dep.get("optional", False)
+                is_bundled = dep.get("bundled", False)
 
                 if dep_name not in installed:
                     if is_optional:
                         problems.append(
                             {
-                                'shortName': short_name,
-                                'problem': 'missing_optional_dependency',
-                                'dependency': dep_name,
-                                'requiredVersion': dep_version,
-                                'severity': 'info',
-                                'message': f'Missing optional dependency: {dep_name}',
+                                "shortName": short_name,
+                                "problem": "missing_optional_dependency",
+                                "dependency": dep_name,
+                                "requiredVersion": dep_version,
+                                "severity": "info",
+                                "message": f"Missing optional dependency: {dep_name}",
                             }
                         )
                     elif not is_bundled:
                         problems.append(
                             {
-                                'shortName': short_name,
-                                'problem': 'missing_dependency',
-                                'dependency': dep_name,
-                                'requiredVersion': dep_version,
-                                'severity': 'error',
-                                'message': f'Missing required dependency: {dep_name}',
+                                "shortName": short_name,
+                                "problem": "missing_dependency",
+                                "dependency": dep_name,
+                                "requiredVersion": dep_version,
+                                "severity": "error",
+                                "message": f"Missing required dependency: {dep_name}",
                             }
                         )
                 else:
-                    installed_ver = installed[dep_name].get('version', '')
+                    installed_ver = installed[dep_name].get("version", "")
                     if dep_version and installed_ver and installed_ver != dep_version:
                         if self._is_version_greater(installed_ver, dep_version):
                             continue
                         if is_optional:
                             problems.append(
                                 {
-                                    'shortName': short_name,
-                                    'problem': 'version_mismatch_optional',
-                                    'dependency': dep_name,
-                                    'requiredVersion': dep_version,
-                                    'installedVersion': installed_ver,
-                                    'severity': 'info',
-                                    'message': (
-                                        f'Optional dependency {dep_name} version mismatch: '
-                                        f'required {dep_version}, installed {installed_ver}'
+                                    "shortName": short_name,
+                                    "problem": "version_mismatch_optional",
+                                    "dependency": dep_name,
+                                    "requiredVersion": dep_version,
+                                    "installedVersion": installed_ver,
+                                    "severity": "info",
+                                    "message": (
+                                        f"Optional dependency {dep_name} version mismatch: "
+                                        f"required {dep_version}, installed {installed_ver}"
                                     ),
                                 }
                             )
                         else:
                             problems.append(
                                 {
-                                    'shortName': short_name,
-                                    'problem': 'version_mismatch',
-                                    'dependency': dep_name,
-                                    'requiredVersion': dep_version,
-                                    'installedVersion': installed_ver,
-                                    'severity': 'error',
-                                    'message': (
-                                        f'Dependency {dep_name} version mismatch: '
-                                        f'required {dep_version}, installed {installed_ver}'
+                                    "shortName": short_name,
+                                    "problem": "version_mismatch",
+                                    "dependency": dep_name,
+                                    "requiredVersion": dep_version,
+                                    "installedVersion": installed_ver,
+                                    "severity": "error",
+                                    "message": (
+                                        f"Dependency {dep_name} version mismatch: "
+                                        f"required {dep_version}, installed {installed_ver}"
                                     ),
                                 }
                             )
@@ -784,12 +836,12 @@ class Jenkins:
         plugins = self.get_plugins(depth=depth)
         return [
             {
-                'shortName': p.get('shortName'),
-                'longName': p.get('longName'),
-                'version': p.get('version'),
+                "shortName": p.get("shortName"),
+                "longName": p.get("longName"),
+                "version": p.get("version"),
             }
             for p in plugins
-            if p.get('hasUpdate')
+            if p.get("hasUpdate")
         ]
 
     def get_plugins_with_backup(self, depth: int = 0) -> list[dict]:
@@ -803,24 +855,24 @@ class Jenkins:
         Returns:
             A list of plugins that can be downgraded.
         """
-        response = self.request('GET', rest_endpoint.PLUGIN_LIST(depth=depth))
-        plugins = response.json().get('plugins', [])
+        response = self.request("GET", rest_endpoint.PLUGIN_LIST(depth=depth))
+        plugins = response.json().get("plugins", [])
         return [
             {
-                'shortName': p.get('shortName'),
-                'longName': p.get('longName'),
-                'version': p.get('version'),
-                'backupVersion': p.get('backupVersion'),
-                'downgradable': p.get('downgradable'),
+                "shortName": p.get("shortName"),
+                "longName": p.get("longName"),
+                "version": p.get("version"),
+                "backupVersion": p.get("backupVersion"),
+                "downgradable": p.get("downgradable"),
             }
             for p in plugins
-            if p.get('backupVersion') and p.get('downgradable')
+            if p.get("backupVersion") and p.get("downgradable")
         ]
 
     def _get_jenkins_version(self) -> str:
         """Get the Jenkins core version from response header."""
-        response = self.request('GET', '', crumb=False)
-        return response.headers.get('X-Jenkins', '')
+        response = self.request("GET", "", crumb=False)
+        return response.headers.get("X-Jenkins", "")
 
     def _is_core_compatible(self, jenkins_ver: str, required_ver: str) -> bool:
         """Check if Jenkins version is compatible with required core version."""
@@ -828,7 +880,7 @@ class Jenkins:
             return True
 
         def normalize_version(v: str) -> tuple:
-            parts = v.split('.')
+            parts = v.split(".")
             return tuple(int(p) if p.isdigit() else 0 for p in parts[:3])
 
         core = normalize_version(jenkins_ver)
@@ -841,7 +893,7 @@ class Jenkins:
             return False
 
         def normalize_version(v: str) -> tuple:
-            parts = v.split('.')
+            parts = v.split(".")
             return tuple(int(p) if p.isdigit() else 0 for p in parts[:3])
 
         installed = normalize_version(installed_ver)
@@ -860,10 +912,14 @@ class Jenkins:
             A dictionary containing 'nodes' and 'edges' for Graphviz rendering.
         """
         plugins = self.get_plugins(depth=2)
-        installed = {p['shortName']: p for p in plugins}
+        installed = {p["shortName"]: p for p in plugins}
 
         if short_name not in installed:
-            return {'nodes': [], 'edges': [], 'error': f'Plugin not found: {short_name}'}
+            return {
+                "nodes": [],
+                "edges": [],
+                "error": f"Plugin not found: {short_name}",
+            }
 
         nodes = []
         edges = []
@@ -875,24 +931,24 @@ class Jenkins:
             visited.add(name)
 
             if name not in installed:
-                nodes.append({'id': name, 'label': name, 'status': 'missing'})
+                nodes.append({"id": name, "label": name, "status": "missing"})
                 return
 
             plugin = installed[name]
             nodes.append(
                 {
-                    'id': name,
-                    'label': f'{name}\n({plugin.get("version", "?")})',
-                    'status': 'installed',
+                    "id": name,
+                    "label": f'{name}\n({plugin.get("version", "?")})',
+                    "status": "installed",
                 }
             )
 
-            deps = plugin.get('dependencies', [])
+            deps = plugin.get("dependencies", [])
             for dep in deps:
-                dep_name = dep.get('shortName', '')
-                edges.append({'from': name, 'to': dep_name})
+                dep_name = dep.get("shortName", "")
+                edges.append({"from": name, "to": dep_name})
                 traverse(dep_name)
 
         traverse(short_name)
 
-        return {'nodes': nodes, 'edges': edges}
+        return {"nodes": nodes, "edges": edges}

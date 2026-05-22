@@ -6,7 +6,7 @@ from starlette.middleware import Middleware as ASGIMiddleware
 
 from mcp_jenkins.core import AuthMiddleware, LifespanContext, lifespan
 
-__all__ = ['mcp']
+__all__ = ["mcp"]
 
 
 class JenkinsMCP(FastMCP[LifespanContext]):
@@ -14,9 +14,9 @@ class JenkinsMCP(FastMCP[LifespanContext]):
         self,
         path: str | None = None,
         middleware: list[ASGIMiddleware] | None = None,
-        transport: Literal['http', 'streamable-http', 'sse'] = 'http',
+        transport: Literal["http", "streamable-http", "sse"] = "http",
         **kwargs: Any,  # noqa: ANN401
-    ) -> 'Starlette':
+    ) -> "Starlette":
         """Override to add JenkinsAuthMiddleware"""
         jenkins_auth_mw = ASGIMiddleware(AuthMiddleware)
 
@@ -24,11 +24,21 @@ class JenkinsMCP(FastMCP[LifespanContext]):
         if middleware:
             final_middleware_list.extend(middleware)
 
-        return super().http_app(path=path, middleware=final_middleware_list, transport=transport, **kwargs)
+        return super().http_app(
+            path=path, middleware=final_middleware_list, transport=transport, **kwargs
+        )
 
 
-mcp = JenkinsMCP('mcp-jenkins', lifespan=lifespan)
+mcp = JenkinsMCP("mcp-jenkins", lifespan=lifespan)
 
 # Import tool modules to register them with the MCP server
 # This must happen after mcp is created so the @mcp.tool() decorators can reference it
-from mcp_jenkins.server import build, instance, item, node, plugin, queue, view  # noqa: F401, E402
+from mcp_jenkins.server import (
+    build,
+    instance,
+    item,
+    node,
+    plugin,
+    queue,
+    view,
+)  # noqa: F401, E402

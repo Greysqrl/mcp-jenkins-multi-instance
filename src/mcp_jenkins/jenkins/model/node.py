@@ -7,11 +7,11 @@ class Node(BaseModel):
     displayName: str
     offline: bool
 
-    executors: list['NodeExecutor']
+    executors: list["NodeExecutor"]
 
 
 class NodeExecutor(BaseModel):
-    currentExecutable: Optional['NodeExecutorCurrentExecutable'] = None
+    currentExecutable: Optional["NodeExecutorCurrentExecutable"] = None
 
 
 class NodeExecutorCurrentExecutable(BaseModel):

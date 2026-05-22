@@ -3,7 +3,7 @@ from fastmcp import Context
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=['read'])
+@mcp.tool(tags=["read"])
 async def list_instances(ctx: Context) -> dict:
     """List all configured Jenkins instances and the default.
 
@@ -13,9 +13,9 @@ async def list_instances(ctx: Context) -> dict:
     """
     instances = ctx.request_context.lifespan_context.instances
     if not instances:
-        return {'instances': [], 'default': None}
+        return {"instances": [], "default": None}
 
     return {
-        'instances': list(instances.instances.keys()),
-        'default': instances.default,
+        "instances": list(instances.instances.keys()),
+        "default": instances.default,
     }
